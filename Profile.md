@@ -9,3 +9,4 @@
 
 # Socials
 **Linkedin** : https://pk.linkedin.com/in/muhammad-umer-karim-a063b7216?trk=people-guest_people_search-card
+**Instagram** : https://www.instagram.com/umarkarim178/
