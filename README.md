@@ -15,6 +15,12 @@
 An intermediate-level game developer with 3 years of experience in creating interactive games, specialize in both 3D modeling and full-cycle game development.
 My portfolio is present on my github page. I have created over more than 4 projects/prototypes.
 
+### Skills
+- Unity Game development
+- C#
+- Blender (3D designing)
+- Arduino Boards (Learning)
+
 ### Hobbies
 - Programming
 - Football
