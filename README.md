@@ -16,3 +16,6 @@ An intermediate-level game developer with 3 years of experience in creating inte
 My portfolio is present on my github page. I have created over more than 4 projects/prototypes.
 
 #Hobbies
+- Programming
+- Football
+- Video Games
