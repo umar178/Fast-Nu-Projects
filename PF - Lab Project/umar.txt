@@ -1,0 +1,19 @@
+{
+"details": {
+	"name": "umar",
+	"age": 18
+}
+
+},
+"details2": {
+	"name": "haider",
+	"age": 16
+}
+
+},
+"details3": {
+	"name": "khadija",
+	"age": 14
+}
+
+}
