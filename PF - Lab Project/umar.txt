@@ -1,26 +1,11 @@
 {
-"details": {
-	"name": "umar",
-	"age": 18
-}
-
-},
-"details2": {
+"person": {
 	"name": "haider",
 	"age": 16
 }
-
-},
-"details3": {
+,
+"sister": {
 	"name": "khadija",
 	"age": 14
 }
-
-},
-{
-	"age": 18,
-	"text": "hi",
-	"text2": "hello"
-}
-
 }

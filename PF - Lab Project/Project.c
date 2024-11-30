@@ -5,105 +5,107 @@
 #define MAX_LINE_LENGTH 256
 #define MAX_JSON_LENGTH 1024
 
+typedef struct{
+	char *name;
+	int line;
+}Block;
+
+void remove_quotes_and_commas(char* str) {
+    int i = 0, j = 0;
+    while (str[i]) {
+        if (str[i] != '"' && str[i] != ',' && str[i] != ' ' && str[i] != '\n' && str[i] != '\t') {
+            str[j++] = str[i]; 
+        }
+        i++;
+    }
+    str[j] = '\0';
+}
+
 void read_json(const char *filename) {
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Error opening file!\n");
+    if (!file) {
+        printf("Could not open file %s.\n", filename);
         return;
     }
 
-    // Read the entire content of the file into a buffer
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    char *fileData = (char *)malloc(fileSize + 1);
-    if (fileData == NULL) {
-        printf("Memory allocation failed.\n");
+    char str[MAX_LINE_LENGTH];
+    Block *data = NULL;
+    int data_i = -1;
+    int l = 0;
+
+    fgets(str, sizeof(str), file);
+    l++;
+
+    while (fgets(str, sizeof(str), file) != NULL) {
+        l++;
+
+        if (strchr(str, '{')) {
+            data_i++;
+
+            Block *temp = (Block*)realloc(data, sizeof(Block) * (data_i + 1));
+            if (temp == NULL) {
+                printf("Memory reallocation failed.\n");
+                free(data);
+                fclose(file);
+                return;
+            }
+            data = temp;
+
+            data[data_i].name = (char*)malloc(sizeof(char) * (strlen(str) + 1));
+
+            sscanf(str, "%[^:]", data[data_i].name);
+
+            data[data_i].line = l;
+        }
+    }
+    
+    printf("\nSelect a block number from the following list:\n");
+    for (int i = 0; i <= data_i; i++) {
+        printf("%d: %s\n", i + 1, data[i].name);
+    }
+
+    int block_number;
+    printf("\nEnter the block number to view its data: ");
+    scanf("%d", &block_number);
+
+    if (block_number < 1 || block_number > data_i + 1) {
+        printf("Invalid block number!\n");
+        free(data);
         fclose(file);
         return;
     }
 
-    fread(fileData, 1, fileSize, file);
-    fileData[fileSize] = '\0';  // Null-terminate the data
-    fclose(file);
-
-    // Parse the file data to extract the headings
-    printf("\nHeadings in the file:\n");
-
-    char *cursor = fileData;
-    char *headings[100];  // To store the headings
-    int headingCount = 0;
-
-    // Extract headings by looking for keys followed by an opening `{`
-    while ((cursor = strstr(cursor, "\"")) != NULL) {
-        char *headingEnd = strstr(cursor + 1, "\"");
-        if (headingEnd != NULL && *(headingEnd + 1) == ':' && *(headingEnd + 2) == ' ') {
-            // Check if the next character after `:` is `{`
-            if (*(headingEnd + 3) == '{') {
-                *headingEnd = '\0';  // Temporarily terminate the heading string
-                headings[headingCount++] = cursor + 1;  // Store the heading
-                printf("%d. %s\n", headingCount, cursor + 1);
-                cursor = headingEnd + 4;  // Move past the heading and opening `{`
-            } else {
-                cursor = headingEnd + 1;
+	printf("\n");
+	
+    fseek(file, 0, SEEK_SET); 
+    l = 0;
+    int block_found = 0;
+    while (fgets(str, sizeof(str), file) != NULL) {
+        l++;
+        if (block_found) {
+            if (strchr(str, '}')) {
+            	printf("\n");
+                printf("End of block reached.\n");
+                printf("\n");
+                break;
             }
+            remove_quotes_and_commas(str);
+            printf("%s\n", str);
         } else {
-            break;
+            if (strstr(str, data[block_number - 1].name)) {
+                block_found = 1;
+                printf("Data for block %d (%s):\n", block_number, data[block_number - 1].name);
+            }
         }
     }
+    
+    printf("\n");
 
-    if (headingCount == 0) {
-        printf("No headings found in the file.\n");
-        free(fileData);
-        return;
-    }
-
-    // Ask the user to select a heading
-    int choice;
-    printf("\nEnter the number of the block you want to view (1-%d): ", headingCount);
-    scanf("%d", &choice);
-
-    if (choice < 1 || choice > headingCount) {
-        printf("Invalid choice!\n");
-        free(fileData);
-        return;
-    }
-
-    // Locate and display the corresponding block of data
-    cursor = strstr(fileData, headings[choice - 1]) + strlen(headings[choice - 1]) + 3; // Move to the `{`
-    if (*cursor != '{') {
-        printf("Error locating the block data!\n");
-        free(fileData);
-        return;
-    }
-
-    char *blockEnd = cursor;
-    int braceCount = 1;
-
-    // Find the matching closing `}`
-    while (braceCount > 0 && *blockEnd != '\0') {
-        blockEnd++;
-        if (*blockEnd == '{') braceCount++;
-        if (*blockEnd == '}') braceCount--;
-    }
-
-    if (braceCount != 0) {
-        printf("Malformed JSON data!\n");
-        free(fileData);
-        return;
-    }
-
-    blockEnd++;
-    char temp = *blockEnd;  // Temporarily null-terminate the block
-    *blockEnd = '\0';
-
-    printf("\nData for the selected block:\n%s\n", cursor);
-    *blockEnd = temp;  // Restore the original character
-
-    free(fileData);
+    free(data);
+    fclose(file);
 }
 
-void write_json(const char *filename) {
+void append_json(const char *filename) {
     char heading[50];
     char *Data;
     int datasets, capacity = 1000;
@@ -172,24 +174,27 @@ void write_json(const char *filename) {
     }
 
     Data[track++] = '}';
-    Data[track++] = '\n';
     Data[track] = '\0'; 
 
-    FILE *file = fopen(filename, "a+");
+    FILE *file = fopen(filename, "r+");
     if (file == NULL) {
-        printf("Failed to open the file for writing.\n");
-        free(Data);
-        return;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-
-    if (fileSize > 0) {
-        fseek(file, -2, SEEK_END); 
-        fprintf(file, ",\n%s\n}", Data);
+        file = fopen(filename, "w");
+        if (file == NULL) {
+            printf("Failed to create the file.\n");
+            free(Data);
+            return;
+        }
+        fprintf(file, "{\n%s\n}", Data);
     } else {
-        fprintf(file, "{\n%s\n}", Data); 
+        fseek(file, 0, SEEK_END);
+        long fileSize = ftell(file);
+
+        if (fileSize == 0) {
+            fprintf(file, "{\n%s\n}", Data);
+        } else {
+            fseek(file, -2, SEEK_END); 
+            fprintf(file, ",\n%s\n}", Data);
+        }
     }
 
     fclose(file);
@@ -198,6 +203,250 @@ void write_json(const char *filename) {
     printf("%s", Data);
 
     free(Data);
+}
+
+void read_raw(const char *filename){
+	FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Could not open file %s.\n", filename);
+        return;
+    }
+
+    char str[MAX_LINE_LENGTH];
+    
+	printf("\n");
+    printf("File Content:\n");
+    
+    while (fgets(str, sizeof(str), file) != NULL) {
+        printf("%s", str); 
+    }
+	printf("\n");
+	printf("\n");
+    fclose(file);
+}
+
+void write_json(const char *filename) {
+    char heading[50];
+    char *Data;
+    int datasets, capacity = 1000;
+    int track = 0;
+
+    Data = (char *)malloc(capacity * sizeof(char));
+    if (Data == NULL) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    printf("Give your block a heading (0 for none): ");
+    scanf("%s", heading);
+
+    if (strcmp(heading, "0") != 0) {
+        Data[track++] = '"';
+        strcpy(Data + track, heading);
+        track += strlen(heading);
+        Data[track++] = '"';
+        Data[track++] = ':';
+        Data[track++] = ' ';
+    }
+
+    Data[track++] = '{';
+    Data[track++] = '\n';
+
+    printf("Enter the number of datasets for this block: ");
+    scanf("%d", &datasets);
+
+    for (int i = 0; i < datasets; i++) {
+        char key[50], value[50];
+        int op;
+
+        Data[track++] = '\t';
+
+        printf("\nFor element %d, enter 1 for integer and 0 for string: ", i + 1);
+        scanf("%d", &op);
+
+        printf("Key: ");
+        scanf("%s", key);
+        Data[track++] = '"';
+        strcpy(Data + track, key);
+        track += strlen(key);
+        Data[track++] = '"';
+        Data[track++] = ':';
+        Data[track++] = ' ';
+
+        if (op == 1) {
+            printf("Enter integer value: ");
+            scanf("%s", value);
+            strcpy(Data + track, value);
+            track += strlen(value);
+        } else {
+            printf("Enter string value: ");
+            scanf("%s", value);
+            Data[track++] = '"';
+            strcpy(Data + track, value);
+            track += strlen(value);
+            Data[track++] = '"';
+        }
+
+        if (i < datasets - 1) {
+            Data[track++] = ',';
+        }
+        Data[track++] = '\n';
+    }
+
+    Data[track++] = '}';
+    Data[track] = '\0';
+
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("Failed to create or open the file.\n");
+        free(Data);
+        return;
+    }
+
+    fprintf(file, "{\n%s\n}", Data);
+
+    fclose(file);
+
+    printf("Updated values have been written to %s:\n", filename);
+    printf("%s", Data);
+
+	printf("\n");
+	printf("\n");
+
+    free(Data);
+}
+
+int characterCount(char str[100], char letter){
+	int total;
+	for(int i = 0; i < strlen(str); i++){
+		if(str[i] == letter){
+			total++;
+		}
+	}
+	return total;
+}
+
+void update_json(const char *filename) {
+    FILE *file = fopen(filename, "r+");
+    if (!file) {
+        printf("Could not open file %s.\n", filename);
+        return;
+    }
+
+    char **data = NULL;
+    char str[MAX_LINE_LENGTH];
+    Block *data_struct = NULL;
+    int data_i = -1;
+    int l = 0;
+
+    while (fgets(str, sizeof(str), file) != NULL) {
+        l++;
+        data = (char **)realloc(data, sizeof(char *) * l);
+        if (!data) {
+            printf("Memory allocation failed for data.\n");
+            fclose(file);
+            return;
+        }
+        data[l - 1] = (char *)malloc(sizeof(char) * (strlen(str) + 1));
+        if (!data[l - 1]) {
+            printf("Memory allocation failed for line %d.\n", l);
+            fclose(file);
+            return;
+        }
+        strcpy(data[l - 1], str);
+
+        if (strchr(str, '{')) {
+            data_i++;
+            data_struct = (Block *)realloc(data_struct, sizeof(Block) * (data_i + 1));
+            if (!data_struct) {
+                printf("Memory allocation failed for data_struct.\n");
+                fclose(file);
+                return;
+            }
+            data_struct[data_i].name = (char *)malloc(sizeof(char) * (strlen(str) + 1));
+            if (!data_struct[data_i].name) {
+                printf("Memory allocation failed for block name.\n");
+                fclose(file);
+                return;
+            }
+            sscanf(str, "\"%[^\"]", data_struct[data_i].name);
+            data_struct[data_i].line = l;
+        }
+    }
+
+    printf("\nBlocks detected:\n");
+    for (int i = 1; i <= data_i; i++) {
+        printf("%d: %s (Line %d)\n", i, data_struct[i].name, data_struct[i].line);
+    }
+
+    int block_number;
+    printf("\nEnter the block number to view its data: ");
+    scanf("%d", &block_number);
+
+    while (block_number < 1 || block_number > data_i + 1) {
+        printf("Invalid block number!\n");
+        printf("\nEnter the block number to view its data: ");
+        scanf("%d", &block_number);
+    }
+
+    int start = data_struct[block_number].line;
+    int end;
+
+    printf("Data elements:\n");
+    for (int i = start; i < l; i++) {
+        if (strchr(data[i], '}')) {
+            end = i;
+            break;
+        } else {
+            printf("%s", data[i]);
+        }
+    }
+
+    char key[50];
+    printf("Enter element key to modify: ");
+    scanf("%s", key);
+
+    for (int i = start; i < end; i++) {
+        if (strstr(data[i], key)) {
+            if (characterCount(data[i], '"') == 4) {
+                char buffer[100];
+                char *val;
+                printf("Enter a string value: ");
+                scanf("%s", buffer);
+                val = (char *)malloc(sizeof(char) * (strlen(buffer) + 1));
+                strcpy(val, buffer);
+                sprintf(data[i], "\t\"%s\": \"%s\",\n", key, val);
+                free(val);
+            } else if (characterCount(data[i], '"') == 2) {
+                int val;
+                printf("Enter a numerical value: ");
+                scanf("%d", &val);
+                sprintf(data[i], "\t\"%s\": %d,\n", key, val);
+            }
+            printf("Updated element: %s", data[i]);
+            break;
+        }
+        if (i == end - 1) {
+            printf("Element not found\n");
+        }
+    }
+
+    freopen(filename, "w", file);
+    for (int i = 0; i < l; i++) {
+        fputs(data[i], file);
+    }
+
+    for (int i = 0; i < l; i++) {
+        free(data[i]);
+    }
+    free(data);
+
+    for (int i = 0; i <= data_i; i++) {
+        free(data_struct[i].name);
+    }
+    free(data_struct);
+
+    fclose(file);
 }
 
 int main() {
@@ -209,25 +458,31 @@ int main() {
     
     do{
     	printf("Choose an operation:\n");
-	    printf("1. Read data from file\n");
-	    printf("2. Write to JSON file\n");
+	    printf("1. Read a block of data from file\n");
+	    printf("2. Append to file\n");
 	    printf("3. Read raw file\n");
-	    printf("4. Exit\n");
+	    printf("4. Overwrite the complete file\n");
+	    printf("5. Update values\n");
+	    printf("6. Exit\n");
 	    printf("Enter your choice: ");
 	    scanf("%d", &choice);
 	
 	    if (choice == 1) {
 	        read_json(filename);
 	    } else if (choice == 2) {
-	        write_json(filename);
+	        append_json(filename);
 	    } else if (choice == 3) {
+	        read_raw(filename);
+	    }else if (choice == 4) {
 	        write_json(filename);
+	    }else if (choice == 5) {
+	        update_json(filename);
+	    }else if (choice == 6) {
+	        break;
 	    } else {
 	        printf("Invalid choice.\n");
 	    }
-	}while(choice != 4);
-
-    
+	}while(choice != 5);
 
     return 0;
 }
