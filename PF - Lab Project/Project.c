@@ -316,16 +316,6 @@ void write_json(const char *filename) {
     free(Data);
 }
 
-int characterCount(char str[100], char letter){
-	int total;
-	for(int i = 0; i < strlen(str); i++){
-		if(str[i] == letter){
-			total++;
-		}
-	}
-	return total;
-}
-
 void update_json(const char *filename) {
     FILE *file = fopen(filename, "r+");
     if (!file) {
@@ -343,13 +333,11 @@ void update_json(const char *filename) {
         l++;
         data = (char **)realloc(data, sizeof(char *) * l);
         if (!data) {
-            printf("Memory allocation failed for data.\n");
             fclose(file);
             return;
         }
         data[l - 1] = (char *)malloc(sizeof(char) * (strlen(str) + 1));
         if (!data[l - 1]) {
-            printf("Memory allocation failed for line %d.\n", l);
             fclose(file);
             return;
         }
@@ -359,24 +347,22 @@ void update_json(const char *filename) {
             data_i++;
             data_struct = (Block *)realloc(data_struct, sizeof(Block) * (data_i + 1));
             if (!data_struct) {
-                printf("Memory allocation failed for data_struct.\n");
                 fclose(file);
                 return;
             }
             data_struct[data_i].name = (char *)malloc(sizeof(char) * (strlen(str) + 1));
             if (!data_struct[data_i].name) {
-                printf("Memory allocation failed for block name.\n");
                 fclose(file);
                 return;
             }
             sscanf(str, "\"%[^\"]", data_struct[data_i].name);
-            data_struct[data_i].line = l;
+            data_struct[data_i].line = l - 1;
         }
     }
 
     printf("\nBlocks detected:\n");
     for (int i = 1; i <= data_i; i++) {
-        printf("%d: %s (Line %d)\n", i, data_struct[i].name, data_struct[i].line);
+        printf("%d: %s\n", i, data_struct[i].name);
     }
 
     int block_number;
@@ -389,46 +375,57 @@ void update_json(const char *filename) {
         scanf("%d", &block_number);
     }
 
-    int start = data_struct[block_number].line;
-    int end;
+    int block_start = data_struct[block_number].line;
+    int block_end = block_start;
 
-    printf("Data elements:\n");
-    for (int i = start; i < l; i++) {
+    for (int i = block_start + 1; i < l; i++) {
         if (strchr(data[i], '}')) {
-            end = i;
+            block_end = i;
             break;
-        } else {
-            printf("%s", data[i]);
         }
     }
 
-    char key[50];
+    printf("Data elements:\n");
+    for (int i = block_start + 1; i < block_end; i++) {
+        printf("%s", data[i]);
+    }
+
+    char key[50], quoted_key[52];
     printf("Enter element key to modify: ");
     scanf("%s", key);
 
-    for (int i = start; i < end; i++) {
-        if (strstr(data[i], key)) {
-            if (characterCount(data[i], '"') == 4) {
+    snprintf(quoted_key, sizeof(quoted_key), "\"%s\"", key);
+
+    int found = 0;
+    for (int i = block_start + 1; i < block_end; i++) {
+        char *key_pos = strstr(data[i], quoted_key);
+        if (key_pos && key_pos[strlen(quoted_key)] == ':') {
+            found = 1;
+
+            // Determine if the value is a string or an integer
+            char *value_start = strchr(key_pos, ':') + 1;
+            while (*value_start == ' ' || *value_start == '\t') {
+                value_start++;
+            }
+
+            if (*value_start == '"') { // String value
                 char buffer[100];
-                char *val;
                 printf("Enter a string value: ");
                 scanf("%s", buffer);
-                val = (char *)malloc(sizeof(char) * (strlen(buffer) + 1));
-                strcpy(val, buffer);
-                sprintf(data[i], "\t\"%s\": \"%s\",\n", key, val);
-                free(val);
-            } else if (characterCount(data[i], '"') == 2) {
-                int val;
+                snprintf(data[i], MAX_LINE_LENGTH, "\t\"%s\": \"%s\"%s\n", key, buffer, i == block_end - 1 ? "" : ",");
+            } else { // Numerical value
+                int value;
                 printf("Enter a numerical value: ");
-                scanf("%d", &val);
-                sprintf(data[i], "\t\"%s\": %d,\n", key, val);
+                scanf("%d", &value);
+                snprintf(data[i], MAX_LINE_LENGTH, "\t\"%s\": %d%s\n", key, value, i == block_end - 1 ? "" : ",");
             }
             printf("Updated element: %s", data[i]);
             break;
         }
-        if (i == end - 1) {
-            printf("Element not found\n");
-        }
+    }
+
+    if (!found) {
+        printf("Element not found in the selected block.\n");
     }
 
     freopen(filename, "w", file);
@@ -448,6 +445,8 @@ void update_json(const char *filename) {
 
     fclose(file);
 }
+
+
 
 int main() {
     char filename[50];
@@ -482,7 +481,7 @@ int main() {
 	    } else {
 	        printf("Invalid choice.\n");
 	    }
-	}while(choice != 5);
+	}while(choice != 6);
 
     return 0;
 }

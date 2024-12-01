@@ -1,11 +1,21 @@
 {
 "person": {
-	"name": "haider",
-	"age": 16
+	"name": "umar",
+	"age": 18
 }
 ,
 "sister": {
 	"name": "khadija",
 	"age": 14
+}
+,
+"brother": {
+	"name": "haider",
+	"id": 52521341,
+	"age": 16
+},
+"father": {
+	"name": "rizwan",
+	"age": 47
 }
 }
