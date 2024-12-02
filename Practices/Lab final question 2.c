@@ -57,23 +57,22 @@ int** goldBatch(int* numbers, int n, int* totalPairs){
 }
 
 main(){
-	int *arr;
-	int n;
+	int *arr = NULL;
+	int n = 0;
+	int i;
 	
-	printf("Enter number of Elements: ");
-	scanf("%d", &n);
-	
-	arr = (int*)malloc(sizeof(int) * n);
-	
-	for(int i = 0; i < n; i++){
-		printf("Even integer for element %d: ", i+1);
-		scanf("%d", &arr[i]);
-		
-		while(arr[i] % 2 == 1 || arr[i] == 2){
-			printf("Please enter an even number except 2: ");
-			scanf("%d", &arr[i]);
-		}
-	}
+	while (1) {
+        printf("Enter element %d: ", n + 1);
+        scanf("%d", &i);
+
+        if (i == -1) {
+            break;
+        }
+        
+        arr = (int*)realloc(arr, sizeof(int) * (n + 1));
+        arr[n] = i;
+        n++;
+    }
 	
 	printf("\n");
 	
