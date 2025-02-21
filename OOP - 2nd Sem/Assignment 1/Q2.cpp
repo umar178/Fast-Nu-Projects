@@ -91,14 +91,20 @@ public:
     }
 
     void play(Team *team) {
-        cout << "\nTeam " << team->teamName << " is playing!\n";
-        while (!goal.isGoalReached(ball.getX(), ball.getY())) {
-            string directions[] = {"up", "down", "left", "right"};
-            int randomIndex = rand() % 4;
-            team->player->hitBall(ball.getX(), ball.getY(), directions[randomIndex]);
-        }
-        cout << team->teamName << " reached the goal in " << team->player->getHits() << " hits!\n";
-    }
+	    cout << "\nTeam " << team->teamName << " is playing!\n";
+	    
+	    int ballX = ball.getX();  
+	    int ballY = ball.getY();
+	
+	    while (!goal.isGoalReached(ballX, ballY)) {
+	        string directions[] = {"up", "down", "left", "right"};
+	        int randomIndex = rand() % 4;
+	
+	        team->player->hitBall(ballX, ballY, directions[randomIndex]);  
+	    }
+	
+	    cout << team->teamName << " reached the goal in " << team->player->getHits() << " hits!\n";
+	}
 
     void declareWinner() {
         cout << "\nGame Over!\n";
