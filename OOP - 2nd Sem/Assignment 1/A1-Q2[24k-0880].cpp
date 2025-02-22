@@ -118,6 +118,7 @@ public:
 };
 
 int main(){
+	cout<<"Q2 - 24K-0880 - Muhammad Umer Karim"<<endl;
     srand(time(0));
 
     Robot r1("Robo-One"), r2("Robo-Two");
