@@ -115,14 +115,14 @@ int main() {
 
     HauntedHouse hh1("Ghost House");
 
-    hh1.addGhost(new Poltergeist("Polty", 5));
-    hh1.addGhost(new Banshee("Bansha", 7));
-    hh1.addGhost(new ShadowGhost("Shadowy", 6));
+    hh1.addGhost(new Poltergeist("Zahid", 5));
+    hh1.addGhost(new Banshee("Rayyan", 7));
+    hh1.addGhost(new ShadowGhost("Ayesha", 6));
 
     Visitor* visitors[3] = {
-        new Visitor("Alice", 3),
-        new Visitor("Bob", 6),
-        new Visitor("Charlie", 9)
+        new Visitor("Haris", 3),
+        new Visitor("Akbar", 6),
+        new Visitor("khadija", 9)
     };
 
     visit(visitors, 3, hh1);
