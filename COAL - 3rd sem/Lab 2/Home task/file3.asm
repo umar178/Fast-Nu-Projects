@@ -8,7 +8,7 @@ p1 dword ?
 msg byte "Final answer for ((num1%4)/num3)*(num2 + num3*3) is: "
 
 .code
-main PROC
+three PROC
 
 ; num1%4
 mov eax, num1
@@ -55,5 +55,5 @@ call writeint
 call crlf
 
 exit
-main ENDP
-END main
+three ENDP
+END three

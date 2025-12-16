@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file3.asm||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|solutionrelative:file3.asm||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\File1.asm||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|solutionrelative:File1.asm||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file3.asm||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|solutionrelative:file3.asm||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{8E4D7C29-633D-42EE-A3F8-52D53513CFF7}|Project1.vcxproj|C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file2.asm||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -22,30 +22,30 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "file3.asm",
               "DocumentMoniker": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file3.asm",
               "RelativeDocumentMoniker": "file3.asm",
               "ToolTip": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file3.asm",
               "RelativeToolTip": "file3.asm",
-              "ViewState": "AgIAACUAAAAAAAAAAAAuwDsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAADoAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2025-09-06T14:32:35.069Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "File1.asm",
               "DocumentMoniker": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\File1.asm",
               "RelativeDocumentMoniker": "File1.asm",
               "ToolTip": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\File1.asm",
               "RelativeToolTip": "File1.asm",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2025-09-06T14:32:17.882Z",
               "EditorCaption": ""
@@ -58,7 +58,7 @@
               "RelativeDocumentMoniker": "file2.asm",
               "ToolTip": "C:\\Users\\Umar\\Documents\\Fast-Nu-Projects\\COAL - 3rd sem\\Lab 2\\Home task\\file2.asm",
               "RelativeToolTip": "file2.asm",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAQAAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2025-09-06T13:23:22.735Z",
               "EditorCaption": ""

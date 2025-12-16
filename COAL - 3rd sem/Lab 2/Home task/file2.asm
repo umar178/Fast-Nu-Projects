@@ -1,9 +1,7 @@
 INCLUDE Irvine32.inc
 
 .data
-num1 dword 24
-num2 dword 12
-num3 dword 3  
+num1 dword 520
 
 .code
 two PROC  

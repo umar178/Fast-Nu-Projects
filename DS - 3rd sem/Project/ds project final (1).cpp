@@ -1,0 +1,527 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <fstream>
+#include <cstdio>
+
+using namespace std;
+
+const int inf = 1000000;
+
+class course;
+
+template <typename key, typename value>
+class hashmap {
+private:
+    class entry {
+    public: 
+        key key_val;
+        value value_val;
+    };
+
+    vector<vector<entry>> buckets;
+    size_t size_count = 0;
+    
+    static const size_t bucket_count = 10; 
+
+    size_t hash(const key& k) const {
+        size_t hash_val = 0;
+        for (char c : k) hash_val = hash_val * 31 + c;
+        return hash_val % bucket_count;
+    }
+
+public:
+    hashmap() : buckets(bucket_count) {}
+
+    void insert(const key& k, const value& v) {
+        size_t index = hash(k);
+        for (size_t i = 0; i < buckets[index].size(); i++) {
+            if (buckets[index][i].key_val == k) {
+                buckets[index][i].value_val = v; 
+                return;
+            }
+        }
+        buckets[index].push_back({k, v});
+        size_count++;
+    }
+
+    value& operator[](const key& k) {
+        size_t index = hash(k);
+        for (size_t i = 0; i < buckets[index].size(); i++) {
+            if (buckets[index][i].key_val == k) return buckets[index][i].value_val;
+        }
+        buckets[index].push_back({k, value{}}); 
+        size_count++;
+        return buckets[index].back().value_val;
+    }
+
+    size_t count(const key& k) const {
+        size_t index = hash(k);
+        for (size_t i = 0; i < buckets[index].size(); i++) {
+            if (buckets[index][i].key_val == k) return 1;
+        }
+        return 0;
+    }
+    
+    size_t size() const { return size_count; }
+
+    class iterator {
+    public:
+        typename vector<vector<entry>>::iterator bucket_it;
+        typename vector<entry>::iterator entry_it; 
+        typename vector<vector<entry>>::iterator bucket_end;
+
+        iterator(typename vector<vector<entry>>::iterator b_it, typename vector<vector<entry>>::iterator b_end)
+            : bucket_it(b_it), bucket_end(b_end) 
+        {
+            while (bucket_it != bucket_end && bucket_it->empty()) ++bucket_it;
+            if (bucket_it != bucket_end) entry_it = bucket_it->begin();
+        }
+
+        iterator(typename vector<vector<entry>>::iterator b_end) : bucket_it(b_end), bucket_end(b_end) {}
+        
+        pair<const key, value&> operator*() { return {entry_it->key_val, entry_it->value_val}; }
+
+        iterator& operator++() {
+            ++entry_it;
+            if (entry_it == bucket_it->end()) {
+                do { ++bucket_it; } while (bucket_it != bucket_end && bucket_it->empty());
+                if (bucket_it != bucket_end) entry_it = bucket_it->begin();
+            }
+            return *this;
+        }
+        bool operator!=(const iterator& other) const { return bucket_it != other.bucket_it; }
+    };
+
+    iterator begin() { return iterator(buckets.begin(), buckets.end()); }
+    iterator end() { return iterator(buckets.end()); }
+};
+
+template <typename key, typename value>
+const size_t hashmap<key, value>::bucket_count; 
+
+using coursedb = hashmap<string, course>;
+using grademap = hashmap<string, double>;
+
+class course {
+public:
+    string id, name;
+    int difficulty, credits;
+    vector<pair<string, int>> adjacentcourses; 
+
+    course(string i, string n, int d, int c) : id(i), name(n), difficulty(d), credits(c) {}
+    course() {}
+};
+
+class student {
+public:
+    string name, semester;
+    grademap completedcourses; 
+
+    student() { name = "guest"; semester = "1st"; }
+
+    double calculatecgpa(coursedb& coursedb_ref) {
+        double totalpoints = 0;
+        int totalcredits = 0;
+        for (auto const& p : completedcourses) { 
+            if (coursedb_ref.count(p.first)) {
+                int creds = coursedb_ref[p.first].credits;
+                totalpoints += (p.second * creds);
+                totalcredits += creds;
+            }
+        }
+        return (totalcredits == 0) ? 0.0 : totalpoints / totalcredits;
+    }
+    
+    void displaytranscript(coursedb& coursedb_ref) {
+        cout << "\n--- transcript for " << name << " ---\n";
+        for (auto const& p : completedcourses) {
+            if (coursedb_ref.count(p.first)) {
+                cout << "[" << p.first << "] " << coursedb_ref[p.first].name 
+                     << " (credits: " << coursedb_ref[p.first].credits 
+                     << ", grade: " << p.second << ")\n";
+            }
+        }
+        cout << "---------------------------------\n";
+        printf("cumulative gpa (cgpa): %.2f\n", calculatecgpa(coursedb_ref));
+        cout << "---------------------------------\n";
+    }
+
+    void setnextsemester() {
+        if (semester == "1st") semester = "2nd";
+        else if (semester == "2nd") semester = "3rd";
+        else if (semester == "3rd") semester = "4th";
+        else if (semester == "4th") semester = "5th";
+        else if (semester == "5th") semester = "6th";
+        else if (semester == "6th") semester = "7th";
+        else if (semester == "7th") semester = "8th";
+        else semester = "graduate";
+    }
+
+    int getsemesterint() {
+        if (semester == "1st") return 1;
+        if (semester == "2nd") return 2;
+        if (semester == "3rd") return 3;
+        if (semester == "4th") return 4;
+        if (semester == "5th") return 5;
+        if (semester == "6th") return 6;
+        if (semester == "7th") return 7;
+        if (semester == "8th") return 8;
+        return 9; 
+    }
+};
+
+class courseadvisor {
+private:
+    coursedb courses;
+    student currentuser;
+
+    void reversevector(vector<string>& v) {
+        int n = v.size();
+        for (int i = 0; i < n / 2; i++) {
+            string temp = v[i];
+            v[i] = v[n - 1 - i];
+            v[n - 1 - i] = temp;
+        }
+    }
+
+    class minheapcompare {
+    public:
+        bool operator()(const pair<int, string>& a, const pair<int, string>& b) {
+            return a.first > b.first; 
+        }
+    };
+
+public:
+    void saveprogress() {
+        ofstream outfile("student_data.txt");
+        if (!outfile) return;
+        
+        outfile << currentuser.name << endl << currentuser.semester << endl;
+        outfile << currentuser.completedcourses.size() << endl;
+
+        for (auto const& p : currentuser.completedcourses) outfile << p.first << " " << p.second << endl; 
+        cout << "\n[success] data saved.\n";
+        outfile.close();
+    }
+
+    void loadprogress() {
+        ifstream infile("student_data.txt");
+        if (!infile) return;
+        string tid; double tg; int count;
+        
+        if (!(infile >> currentuser.name)) { infile.close(); return; }
+        if (!(infile >> currentuser.semester)) { infile.close(); return; }
+        if (!(infile >> count)) { infile.close(); return; }
+
+        currentuser.completedcourses = grademap();
+        for (int i = 0; i < count; i++) {
+            if (!(infile >> tid >> tg)) break;
+            if (courses.count(tid)) currentuser.completedcourses.insert(tid, tg);
+        }
+        printf("\n[loaded] %s (cgpa: %.2f)\n", currentuser.name.c_str(), currentuser.calculatecgpa(courses));
+        infile.close();
+    }
+
+    void addcourse(string id, string name, int d, int c) {
+        if (!courses.count(id)) courses[id] = course(id, name, d, c);
+    }
+
+    void addprerequisite(string from, string to) {
+        if (courses.count(from) && courses.count(to)) 
+            courses[from].adjacentcourses.push_back({to, courses[to].difficulty});
+    }
+
+    bool checkprereqs(const string& cid) {
+        bool all_met = true;
+        for (auto const& p : courses) {
+            for (auto edge : p.second.adjacentcourses) {
+                if (edge.first == cid) {
+                    if (!currentuser.completedcourses.count(p.first)) {
+                        cout << "[warning] missing prereq: " << p.first << " (" << p.second.name << ")\n";
+                        all_met = false;
+                    }
+                }
+            }
+        }
+        return all_met;
+    }
+
+    void markcompleted(string id) {
+        if (!courses.count(id)) { cout << "invalid id.\n"; return; }
+        
+        if (currentuser.completedcourses.count(id)) {
+            cout << "[note] course already recorded. overwrite? (y/n): ";
+            char c; cin >> c;
+            if (c != 'y' && c != 'Y') return;
+        }
+        
+        if (!checkprereqs(id)) {
+             cout << "missing prerequisites. proceed anyway? (y/n): ";
+             char c; cin >> c;
+             if (c != 'y' && c != 'Y') return; 
+        }
+        cout << "enter grade (0.0 to 4.0): "; double g; 
+        if (!(cin >> g)) { cin.clear(); cin.ignore(1000, '\n'); cout << "invalid input.\n"; return; }
+        
+        currentuser.completedcourses.insert(id, g);
+        cout << "recorded.\n";
+    }
+    
+    void addnewcourse_user() {
+        string id, name, prereq_id;
+        int difficulty, credits;
+
+        cout << "\n--- add new course to catalog ---\n";
+        cout << "enter new course id (e.g., span101): "; cin >> id;
+        if (courses.count(id)) { cout << "error: course id already exists.\n"; return; }
+        
+        cout << "enter course name: "; cin.ignore(); getline(cin, name);
+        cout << "enter difficulty (1-10): "; 
+        if (!(cin >> difficulty) || difficulty < 1 || difficulty > 10) { 
+            cout << "invalid difficulty (must be 1-10).\n"; cin.clear(); cin.ignore(1000, '\n'); return; 
+        }
+        cout << "enter credits: "; 
+        if (!(cin >> credits) || credits < 1) { 
+            cout << "invalid credits (must be >= 1).\n"; cin.clear(); cin.ignore(1000, '\n'); return; 
+        }
+
+        addcourse(id, name, difficulty, credits);
+        cout << "\ncourse " << id << " added to catalog.\n";
+
+        cout << "--- set prerequisites ---\n";
+        cout << "enter prerequisites by id. type 'done' to finish.\n";
+        while (true) {
+            cout << "prerequisite id: "; cin >> prereq_id;
+            if (prereq_id == "done") break;
+
+            if (courses.count(prereq_id)) {
+                addprerequisite(prereq_id, id);
+                cout << prereq_id << " set as prerequisite for " << id << ".\n";
+            } else {
+                cout << "error: prerequisite course id '" << prereq_id << "' does not exist in the catalog. try again.\n";
+            }
+        }
+        cout << "prerequisite setup complete. course is now available for scheduling.\n";
+    }
+
+    bool dfs_cycle(string u, hashmap<string, int>& visited) {
+        visited[u] = 1; 
+        for (auto edge : courses[u].adjacentcourses) {
+            string v = edge.first;
+            if (visited.count(v) && visited[v] == 1) return true;
+            if (!visited.count(v) || visited[v] == 0) {
+                if (dfs_cycle(v, visited)) return true;
+            }
+        }
+        visited[u] = 2; return false;
+    }
+
+    bool detectcycles() {
+        hashmap<string, int> visited;
+        for (auto const& p : courses) visited.insert(p.first, 0); 
+        for (auto const& p : courses) {
+            if (visited[p.first] == 0) if (dfs_cycle(p.first, visited)) {
+                cout << "[error] cycle detected! roadmap generation aborted.\n"; 
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void bfs_reachable() {
+        string start; cout << "start course id: "; cin >> start;
+        if (!courses.count(start)) { cout << "invalid id.\n"; return; }
+        queue<string> q; q.push(start);
+        hashmap<string, bool> visited; visited.insert(start, true);
+        cout << "\n--- courses reachable from " << start << " ---\n";
+        
+        bool found = false;
+        while(!q.empty()){
+            string u = q.front(); q.pop();
+            
+            if(!currentuser.completedcourses.count(u) && u != start) { 
+                cout << "- [" << u << "] " << courses[u].name << "\n";
+                found = true;
+            }
+            
+            for(auto e : courses[u].adjacentcourses) {
+                if(!visited.count(e.first)) { visited.insert(e.first, true); q.push(e.first); }
+            }
+        }
+        if (!found) cout << "no further uncompleted courses reachable.\n";
+    }
+
+    void generateroadmap() {
+        if (detectcycles()) return;
+        
+        hashmap<string, int> indeg;
+        for (auto p : courses) indeg.insert(p.first, 0);
+        for (auto p : courses) for (auto e : p.second.adjacentcourses) indeg[e.first]++;
+
+        auto comp = [this](const pair<int, string>& a, const pair<int, string>& b) {
+            return a.first > b.first; 
+        };
+        priority_queue<pair<int, string>, vector<pair<int, string>>, decltype(comp)> pq(comp);
+
+        for (auto p : courses) {
+            if (indeg[p.first] == 0 && !currentuser.completedcourses.count(p.first))
+                pq.push({courses[p.first].difficulty, p.first});
+        }
+        
+        if (pq.empty()) { cout << "all prerequisite-free courses are completed.\n"; return; }
+
+        int sem = currentuser.getsemesterint();
+        int credits = 0;
+        const int max_credits_per_sem = 12;
+        
+        cout << "\n--- recommended roadmap ---\n";
+        cout << "--- starting from semester " << sem << " (max " << max_credits_per_sem << " credits) ---\n";
+        
+        while (!pq.empty()) {
+            string u = pq.top().second; 
+            int u_credits = courses[u].credits;
+            pq.pop();
+            
+            if (credits + u_credits > max_credits_per_sem) {
+                cout << "\n--- semester " << ++sem << " (max " << max_credits_per_sem << " credits) ---\n"; 
+                credits = 0;
+            }
+            
+            cout << "[" << u << "] " << courses[u].name 
+                 << " (diff: " << courses[u].difficulty << ", credits: " << u_credits << ")\n";
+            
+            credits += u_credits;
+            
+            for (auto e : courses[u].adjacentcourses) {
+                indeg[e.first]--;
+                if (indeg[e.first] == 0 && !currentuser.completedcourses.count(e.first))
+                    pq.push({courses[e.first].difficulty, e.first});
+            }
+        }
+    }
+
+    void findpath(string target) {
+        string start; cout << "start course id: "; cin >> start;
+        if (!courses.count(start) || !courses.count(target)) { cout << "invalid start/target id.\n"; return; }
+        
+        priority_queue<pair<int, string>, vector<pair<int, string>>, minheapcompare> pq;
+        hashmap<string, int> dist; 
+        hashmap<string, string> parent;
+        for (auto p : courses) dist.insert(p.first, inf);
+
+        dist[start] = 0; pq.push({0, start});
+
+        while (!pq.empty()) {
+            int d = pq.top().first; string u = pq.top().second; pq.pop();
+            if (d > dist[u]) continue;
+            if (u == target) break;
+            
+            for (auto e : courses[u].adjacentcourses) {
+                if (dist[u] + e.second < dist[e.first]) {
+                    dist[e.first] = dist[u] + e.second;
+                    parent[e.first] = u;
+                    pq.push({dist[e.first], e.first});
+                }
+            }
+        }
+
+        if (dist[target] == inf) { cout << "no path exists from " << start << " to " << target << ".\n"; return; }
+        
+        vector<string> path;
+        string at = target;
+        while (parent.count(at)) { path.push_back(at); at = parent[at]; } 
+        path.push_back(start);
+        
+        reversevector(path);
+
+        cout << "\n--- shortest path (by minimum total difficulty) ---\n";
+        cout << "total difficulty: " << dist[target] << "\n";
+        cout << "path: ";
+        for (size_t i = 0; i < path.size(); i++) {
+            cout << path[i] << " (" << courses[path[i]].name << ")";
+            if (i < path.size()-1) cout << " -> ";
+        }
+        cout << "\n";
+    }
+
+    void display() {
+        cout << "\n--- course catalog ---\n";
+        for (auto p : courses) {
+            cout << "[" << p.first << "] " << p.second.name 
+                 << " (credits: " << p.second.credits 
+                 << ", difficulty: " << p.second.difficulty << ")\n";
+        }
+    }
+    
+    void displaytranscript() {
+        currentuser.displaytranscript(courses);
+    }
+
+    void advancesemester() {
+        cout << "\ncurrent semester: " << currentuser.semester << endl;
+        currentuser.setnextsemester();
+        cout << "semester advanced to: " << currentuser.semester << endl;
+    }
+};
+
+int main() {
+    courseadvisor ca;
+    
+    ca.addcourse("cs101", "intro to prog", 3, 4); 
+    ca.addcourse("cs102", "oop concepts", 5, 4);
+    ca.addcourse("cs201", "data struct & algo", 8, 3); 
+    
+    ca.addcourse("math1", "calculus i", 6, 3);
+    ca.addcourse("math102", "calculus ii", 7, 3);
+    ca.addcourse("phys101", "university physics i", 6, 4);
+    ca.addcourse("cs202", "discrete math", 5, 3);
+    ca.addcourse("engl101", "college writing", 2, 3); 
+    ca.addcourse("hist101", "world history", 3, 3); 
+    
+    ca.addcourse("se101", "software eng", 4, 3);
+    ca.addcourse("cs401", "senior project", 10, 6);
+    ca.addcourse("cs301", "database sys", 7, 3);
+
+    ca.addprerequisite("cs101", "cs102"); 
+    ca.addprerequisite("cs102", "cs201");
+    
+    ca.addprerequisite("math1", "math102");
+    ca.addprerequisite("math1", "phys101");
+    ca.addprerequisite("math1", "cs202");
+    ca.addprerequisite("cs202", "cs201"); 
+    
+    ca.addprerequisite("cs201", "cs301");
+    ca.addprerequisite("cs201", "se101");
+    ca.addprerequisite("se101", "cs401");
+    ca.addprerequisite("cs301", "cs401");
+
+    ca.loadprogress();
+
+    int ch; string id;
+    while (true) {
+        cout << "\n--- menu ---\n";
+        cout << "1. catalog\n2. mark done (with grade)\n3. transcript\n4. roadmap\n5. path (shortest by difficulty)\n6. reachable courses\n7. save & exit\n8. advance semester\n9. add new course to catalog\nchoice: ";
+        
+        if (!(cin >> ch)) { 
+            cout << "invalid choice. please enter a number.\n";
+            cin.clear(); 
+            cin.ignore(1000, '\n'); 
+            continue; 
+        }
+        
+        switch(ch) {
+            case 1: ca.display(); break;
+            case 2: cout << "enter course id to mark completed: "; cin >> id; ca.markcompleted(id); break;
+            case 3: ca.displaytranscript(); break; 
+            case 4: ca.generateroadmap(); break;
+            case 5: cout << "enter target course id: "; cin >> id; ca.findpath(id); break;
+            case 6: ca.bfs_reachable(); break;
+            case 7: ca.saveprogress(); return 0;
+            case 8: ca.advancesemester(); break;
+            case 9: ca.addnewcourse_user(); break;
+            default: cout << "invalid option. try again.\n";
+        }
+    }
+}
